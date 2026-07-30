@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartPantry AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">🌿</span>
+      <span class="brand-name">SmartPantry<em>AI</em></span>
+    </div>
+
+    <nav class="side-nav">
+      <button class="side-nav__item is-active" data-view="pantry">
+        <span class="side-nav__icon">🗄️</span> Pantry
+      </button>
+      <button class="side-nav__item" data-view="assistant">
+        <span class="side-nav__icon">✨</span> AI Assistant
+      </button>
+    </nav>
+
+    <div class="health-gauge" id="healthGauge">
+      <svg viewBox="0 0 120 120" class="health-gauge__ring">
+        <circle cx="60" cy="60" r="52" class="health-gauge__track"></circle>
+        <circle cx="60" cy="60" r="52" class="health-gauge__progress" id="gaugeProgress"></circle>
+      </svg>
+      <div class="health-gauge__label">
+        <span class="health-gauge__score" id="gaugeScore">—</span>
+        <span class="health-gauge__caption">pantry score</span>
+      </div>
+    </div>
+
+    <p class="sidebar__hint">Score updates automatically as your pantry changes.</p>
+  </aside>
+
+  <!-- ===== Pantry View ===== -->
+  <main class="view" id="view-pantry">
+    <header class="view-header">
+      <div>
+        <p class="eyebrow">Shelf 01</p>
+        <h1>Your Pantry</h1>
+      </div>
+      <button class="btn btn--primary" id="openAddItem">+ Add item</button>
+    </header>
+
+    <div class="pantry-toolbar">
+      <input type="search" id="pantrySearch" placeholder="Search items…" class="input">
+      <select id="pantryFilter" class="input input--select">
+        <option value="all">All categories</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Grains">Grains</option>
+        <option value="Produce">Produce</option>
+        <option value="Protein">Protein</option>
+        <option value="Spices">Spices</option>
+        <option value="Beverages">Beverages</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="pantry-grid" id="pantryGrid">
+      <!-- items injected by pantry.js -->
+    </div>
+
+    <p class="pantry-empty" id="pantryEmpty" hidden>Your shelf is empty. Add your first item to get started.</p>
+  </main>
+
+  <!-- ===== AI Assistant View ===== -->
+  <main class="view" id="view-assistant" hidden>
+    <header class="view-header">
+      <div>
+        <p class="eyebrow">Powered by Gemini</p>
+        <h1>AI Assistant</h1>
+      </div>
+      <button class="btn btn--ghost" id="clearChat">Clear chat</button>
+    </header>
+
+    <div class="chat-panel">
+      <div class="chat-log" id="chatLog">
+        <div class="chat-msg chat-msg--ai">
+          <div class="chat-msg__avatar">✨</div>
+          <div class="chat-msg__body">
+            <div class="chat-msg__bubble">
+              Hi! I can read your pantry and help you decide what to cook, what's about to spoil, and what to buy next. Ask me anything, or try a prompt below.
+            </div>
+            <span class="chat-msg__time"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suggested-prompts" id="suggestedPrompts">
+        <button class="chip">What can I cook today?</button>
+        <button class="chip">Which foods expire this week?</button>
+        <button class="chip">Suggest a healthy dinner.</button>
+        <button class="chip">What groceries should I buy?</button>
+        <button class="chip">How can I reduce food waste?</button>
+        <button class="chip">Analyze my pantry.</button>
+      </div>
+
+      <form class="chat-input-bar" id="chatForm">
+        <button type="button" class="icon-btn" id="micBtn" title="Speak your question">🎤</button>
+        <button type="button" class="icon-btn" id="imageBtn" title="Scan a grocery item">📷</button>
+        <input type="file" id="imageInput" accept="image/*" hidden>
+        <input type="text" id="chatInput" class="input" placeholder="Ask about your pantry…" autocomplete="off">
+        <button type="submit" class="btn btn--primary" id="chatSend">Send</button>
+      </form>
+      <div class="image-preview" id="imagePreview" hidden>
+        <img id="imagePreviewThumb" alt="Selected item photo">
+        <span id="imagePreviewName"></span>
+        <button type="button" id="imagePreviewClear">✕</button>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- ===== Add / Edit Item Modal ===== -->
+<div class="modal-overlay" id="itemModalOverlay" hidden>
+  <div class="modal">
+    <div class="modal__header">
+      <h2 id="itemModalTitle">Add pantry item</h2>
+      <button class="modal__close" id="closeItemModal">✕</button>
+    </div>
+    <form id="itemForm" class="modal__form">
+      <input type="hidden" id="itemId">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="itemName" class="input" required placeholder="e.g. Milk">
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>Quantity</span>
+          <input type="text" id="itemQuantity" class="input" required placeholder="e.g. 2 or 5kg">
+        </label>
+        <label class="field">
+          <span>Category</span>
+          <select id="itemCategory" class="input input--select">
+            <option>Dairy</option>
+            <option>Grains</option>
+            <option>Produce</option>
+            <option>Protein</option>
+            <option>Spices</option>
+            <option>Beverages</option>
+            <option>Other</option>
+          </select>
+        </label>
+      </div>
+      <label class="field">
+        <span>Expiry date</span>
+        <input type="date" id="itemExpiry" class="input" required>
+      </label>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="cancelItemModal">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/pantry.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
